@@ -73,13 +73,19 @@ async def vote(ctx, poll_name:str, option, vote:int):
         if polls[poll_name]["finished"]:
             await ctx.send(f"La encuesta {poll_name} ya ha finalizado")
         else:
-            for opt in polls[poll_name]["options"]:
-                if opt['option'] == option:
-                    opt['votes'] = opt['votes'][0] + vote
-                    await ctx.send(f"Voto añadido a {option} correctamente")
-                    return
-                
-            await ctx.send(f"No se ha encontrado la película '{option}' en '{poll_name}'")
+            if len(polls[poll_name]["options"]) > 0:
+                if vote >= 0 and vote <= 5:
+                    for opt in polls[poll_name]["options"]:
+                        if opt['option'] == option:
+                            opt['votes'] = opt['votes'][0] + vote
+                            await ctx.send(f"Voto añadido a {option} correctamente")
+                            return
+                    
+                    await ctx.send(f"No se ha encontrado la película '{option}' en la encuesta '{poll_name}'")
+                else:
+                    await ctx.send(f"El voto introducido debe ser con una puntuación entre 0 y 5")
+            else:
+                await ctx.send(f"La encuesta {poll_name} no tiene opciones")
     else:
         await ctx.send(f"No se ha encontrado la encuesta '{poll_name}'")
         
