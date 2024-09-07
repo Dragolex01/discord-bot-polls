@@ -15,8 +15,8 @@ bot = commands.Bot(command_prefix='$', intents=intents)
 polls = {
     "test": {
         "options": [
-            {"option": "option1", "votes": []},
-            {"option": "option2", "votes": []}
+            {"option": "option1", "votes": [0]},
+            {"option": "option2", "votes": [0]}
         ],
         "finished": False
     }
@@ -35,7 +35,7 @@ async def create(ctx, poll_name: str):
     if poll_name in polls:
         await ctx.send(f"Ya existe una encuesta con el nombre '{poll_name}'.")
     else:
-        polls[poll_name] = {"options": [], "finished": False}
+        polls[poll_name] = {"options": [], "finished": False} # Añadir votos
         await ctx.send(f"Encuesta '{poll_name}' creada exitosamente.")
 
 # Add to poll
@@ -68,11 +68,28 @@ async def remove(ctx, poll_name: str, position: int):
 
 # Vote a poll
 @bot.command()
-async def vote(ctx, poll_name:str, option, vote):
-    if vote >= 0 and vote <= 5:
-        polls[poll_name]["vote"].append(vote) # Deber ser 1 por persona
+async def vote(ctx, poll_name:str, option, vote:int):
+    if poll_name in polls:
+        if polls[poll_name]["finished"]:
+            await ctx.send(f"La encuesta {poll_name} ya ha finalizado")
+        else:
+            for opt in polls[poll_name]["options"]:
+                if opt['option'] == option:
+                    opt['votes'] = opt['votes'][0] + vote
+                    await ctx.send(f"Voto añadido a {option} correctamente")
+                    return
+                
+            await ctx.send(f"No se ha encontrado la película '{option}' en '{poll_name}'")
     else:
-        await ctx.send("La votación debe ser una puntuación enter 1 y 5")
+        await ctx.send(f"No se ha encontrado la encuesta '{poll_name}'")
+        
+
+    # if vote >= 0 and vote <= 5:
+    #     polls[poll_name]["vote"].append(vote) # Deber ser 1 por persona
+    #     polls[poll_name]["options"]
+    #     votes = [option['votes'] for option in polls[poll_name]["options"]]
+    # else:
+    #     await ctx.send("La votación debe ser una puntuación enter 1 y 5")
 
 # Finish poll
 @bot.command()
@@ -108,10 +125,21 @@ async def list(ctx, poll_name: str):
 # Show poll graphic
 @bot.command()
 async def show1(ctx, poll_name: str):
-    if polls[poll_name]["votes"]:
+    if poll_name in polls:
+        votes = []
+        labels = []
+
+        # Obtener votos y opciones
+        for option in polls[poll_name]["options"]:
+            votes.append(option['votes'])
+            labels.append(option['option'])
+
+        print(f">>>>votes: {votes}")
+
         # Crear la gráfica de tarta
         plt.figure(figsize=(8, 8))  # Tamaño de la figura (opcional)
-        plt.pie(polls[poll_name]["votes"], labels=polls[poll_name]["options"], autopct='%1.1f%%', colors=['skyblue', 'orange'])
+        plt.pie(votes, labels=labels, autopct='%1.1f%%', colors=['skyblue', 'orange'])
+
 
         # Añadir título
         plt.title(f'Gráfico de Tarta - Encuesta: TEST')
